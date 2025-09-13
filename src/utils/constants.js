@@ -1,4 +1,4 @@
-export const baseUrl = window.location.hostname == "localhost" ?  "http://localhost:8080" : "https://hcm-backend-gmvw.onrender.com"
+export const baseUrl = window.location.hostname == "localhost" ?  "http://localhost:8080" : " https://hcm-backend-j2v3.onrender.com"
 
 
 export const promptAI = `Hi you are a content writer in my company, your job is to write a bio for a profile on a dating application. you will be given a string consisting of the user's qualities, utilise those qualities and make a suitable bio in not more than 20 words. Your keyword string is as follows : `
