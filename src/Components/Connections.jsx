@@ -1,0 +1,107 @@
+import axios from 'axios'
+import React, { useEffect, useState } from 'react'
+import { baseUrl } from '../utils/constants'
+import { Link, useNavigate } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+import { addConnections } from '../utils/connectionSlice'
+import toast from 'react-hot-toast'
+
+const Connections = () => {
+  const [selectValue, setSelectValue] = useState("my-connections")
+  const [friends, setFriends] = useState([])
+  const [requests, setRequests] = useState([])
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const userData = useSelector(store => store.user)
+
+  async function btnClickHandler(status, id) {
+    const res = await axios.patch(baseUrl + `/connection/review/${status}/${id}`, {}, { withCredentials: true })
+    if (res.status == 201) {
+      setRequests(requests.filter((item) => item._id != id))
+    }
+  }
+
+  useEffect(() => {
+    if (!userData.firstName || !userData.lastName || !userData.DOB || !userData.bio || !userData.image) {
+      navigate("/profile/edit")
+      toast.error("Please complete your profile")
+      return
+    }
+  }, [])
+
+  useEffect(() => {
+    async function getData() {
+      if (selectValue == "my-connections") {
+        let res = await axios.get(baseUrl + "/user/connections", { withCredentials: true })
+        setFriends(res.data)
+        dispatch(addConnections(res.data))
+      } else {
+        let res = await axios.get(baseUrl + "/user/connection-requests", { withCredentials: true })
+        setRequests(res.data)
+      }
+    }
+    getData()
+  }, [selectValue])
+
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-pink-50 p-6 flex flex-col items-center">
+      <select
+        onChange={(e) => setSelectValue(e.target.value)}
+        className="mb-8 px-6 py-3 border text-lg rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
+      >
+        <option value="my-connections">My Connections</option>
+        <option value="connections-requests">Connection Requests</option>
+      </select>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {(selectValue === "my-connections" ? friends : requests).map((item, index) => (
+          <div
+            key={index}
+            className="relative bg-white shadow-xl rounded-2xl p-6 w-80 flex flex-col items-center hover:shadow-2xl hover:scale-105 transition duration-300"
+          >
+            <img
+              onError={(e) => {
+                e.target.src = "https://media.istockphoto.com/id/1341046662/vector/picture-profile-icon-human-or-people-sign-and-symbol-for-template-design.jpg?s=612x612&w=0&k=20&c=A7z3OK0fElK3tFntKObma-3a7PyO8_2xxW0jtmjzT78="
+              }}
+              src={item.image}
+              alt={item.firstName}
+              className="w-32 h-32 object-cover rounded-full border-4 border-pink-500 shadow-md"
+            />
+            <div className="text-center mt-4 mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">{item.firstName} {item.lastName}</h2>
+              <p className="text-gray-600 text-sm mt-1">{item.bio}</p>
+            </div>
+
+            {selectValue === "my-connections" && (
+              <Link
+                to={`/chat/${item._id}`}
+                className="mt-2 px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+              >
+                Chat
+              </Link>
+            )}
+
+            {selectValue === "connections-requests" && (
+              <div className="flex gap-4 mt-4">
+                <button
+                  onClick={() => btnClickHandler("accepted", item._id)}
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition"
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={() => btnClickHandler("rejected", item._id)}
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition"
+                >
+                  Reject
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default Connections
